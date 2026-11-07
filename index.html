@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="referrer" content="origin-when-cross-origin">
     <title>Thai Drive Dashboard v0.2</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -167,23 +168,7 @@
         </section>
     </main>
 
-    <!-- Safety Warning Modal -->
-    <div id="safety-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-cyan-500/40 rounded-2xl p-6 max-w-md w-full shadow-2xl text-center space-y-4">
-            <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-full flex items-center justify-center mx-auto text-2xl animate-bounce">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-            <h3 class="text-lg font-bold text-white" data-i18n="modal_title">คำเตือนความปลอดภัยขณะขับรถ</h3>
-            <p class="text-xs text-slate-300 leading-relaxed" data-i18n="modal_desc">
-                ระบบจำกัดการรับชมวิดีโอขณะรถกำลังเคลื่อนที่ โปรดใช้ความระมัดระวังและปฏิบัติตามกฎจราจรอย่างเคร่งครัด
-            </p>
-            <button onclick="closeSafetyModal()" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold py-3 rounded-xl text-sm transition hover:opacity-95 shadow-[0_0_15px_rgba(0,240,255,0.4)]">
-                <span data-i18n="modal_btn">ฉันจอดรถแล้ว / ยืนยันใช้งาน</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Custom Message Box Modal -->
+    <!-- Custom Message Box Modal (replacing alert) -->
     <div id="message-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-sm w-full text-center space-y-3 shadow-xl">
             <div id="msg-icon" class="text-3xl text-cyan-400 mb-1"><i class="fa-solid fa-circle-info"></i></div>
@@ -197,6 +182,7 @@
 
     <!-- JavaScript Application Logic -->
     <script>
+        // State Management & Localization
         let currentLang = localStorage.getItem('thai_drive_lang') || 'th';
         let currentRatio = localStorage.getItem('thai_drive_ratio') || '50:50';
         let activeWidgets = {
@@ -204,6 +190,7 @@
             right: localStorage.getItem('thai_drive_right') || 'map'
         };
 
+        // Translations Dictionary
         const translations = {
             th: {
                 swap: "สลับจอ",
@@ -214,26 +201,17 @@
                 w_map: "🗺 Navigation / แผนที่",
                 w_youtube: "▶ YouTube / สื่อวิดีโอ",
                 w_iptv: "📺 Thai IPTV / ทีวีไทย",
-                modal_title: "คำเตือนความปลอดภัยขณะขับรถ",
-                modal_desc: "ระบบจำกัดการรับชมวิดีโอขณะรถกำลังเคลื่อนที่ โปรดใช้ความระมัดระวังและปฏิบัติตามกฎจราจรอย่างเคร่งครัด",
-                modal_btn: "ฉันจอดรถแล้ว / ยืนยันใช้งาน",
                 speed: "ความเร็ว",
                 gear: "เกียร์",
                 battery: "แบตเตอรี่ EV",
                 range: "ระยะทางวิ่ง",
                 tire: "แรงดันยาง",
-                psi: "PSI (ปกติ)",
                 weather_title: "สภาพอากาศประเทศไทย",
-                temp: "อุณหภูมิ",
                 humidity: "ความชื้น",
                 rain: "โอกาสฝนตก",
                 wind: "ความเร็วลม",
                 select_province: "เลือกจังหวัด:",
-                search_map: "ค้นหาสถานที่ / สถานีชาร์จ EV...",
-                play: "เล่น",
-                pause: "พัก",
-                next: "ถัดไป",
-                prev: "ก่อนหน้า"
+                search_map: "ค้นหาสถานที่ / สถานีชาร์จ EV..."
             },
             en: {
                 swap: "Swap",
@@ -244,35 +222,32 @@
                 w_map: "🗺 Navigation / Map",
                 w_youtube: "▶ YouTube / Media",
                 w_iptv: "📺 Thai IPTV Channels",
-                modal_title: "Driving Safety Warning",
-                modal_desc: "Video playback while driving is restricted. Please ensure safety and obey traffic regulations.",
-                modal_btn: "Parked / Confirm Access",
                 speed: "Speed",
                 gear: "Gear",
                 battery: "EV Battery",
                 range: "Range",
                 tire: "Tire Pressure",
-                psi: "PSI (Normal)",
                 weather_title: "Thailand Weather",
-                temp: "Temperature",
                 humidity: "Humidity",
                 rain: "Rain Chance",
                 wind: "Wind Speed",
                 select_province: "Select Province:",
-                search_map: "Search place / EV Charging Station...",
-                play: "Play",
-                pause: "Pause",
-                next: "Next",
-                prev: "Previous"
+                search_map: "Search place / EV Charging Station..."
             }
         };
 
+        function t(key) {
+            return translations[currentLang][key] || key;
+        }
+
+        // Initialize App on Window Load
         window.onload = function() {
             applyLanguage();
             setLayoutRatio(currentRatio);
             initClock();
             initResizer();
             
+            // Set select values from state
             document.getElementById('select-left').value = activeWidgets.left;
             document.getElementById('select-right').value = activeWidgets.right;
 
@@ -280,6 +255,7 @@
             renderWidget('right', activeWidgets.right);
         };
 
+        // Interactive Drag Resizer Logic
         function initResizer() {
             const resizer = document.getElementById('resizer');
             const workspace = document.getElementById('workspace');
@@ -331,6 +307,7 @@
             window.addEventListener('touchend', onMouseUp);
         }
 
+        // Clock Updater
         function initClock() {
             setInterval(() => {
                 const now = new Date();
@@ -338,6 +315,7 @@
             }, 1000);
         }
 
+        // Toggle Language
         function toggleLanguage() {
             currentLang = currentLang === 'th' ? 'en' : 'th';
             localStorage.setItem('thai_drive_lang', currentLang);
@@ -362,6 +340,7 @@
             });
         }
 
+        // Layout Ratio Management
         function setLayoutRatio(ratio) {
             currentRatio = ratio;
             localStorage.setItem('thai_drive_ratio', ratio);
@@ -384,14 +363,30 @@
             rightPane.style.flex = 'none';
 
             switch(ratio) {
-                case '50:50': leftPane.style.width = '50%'; rightPane.style.width = '50%'; break;
-                case '60:40': leftPane.style.width = '60%'; rightPane.style.width = '40%'; break;
-                case '40:60': leftPane.style.width = '40%'; rightPane.style.width = '60%'; break;
-                case '70:30': leftPane.style.width = '70%'; rightPane.style.width = '30%'; break;
-                case '30:70': leftPane.style.width = '30%'; rightPane.style.width = '70%'; break;
+                case '50:50':
+                    leftPane.style.width = '50%';
+                    rightPane.style.width = '50%';
+                    break;
+                case '60:40':
+                    leftPane.style.width = '60%';
+                    rightPane.style.width = '40%';
+                    break;
+                case '40:60':
+                    leftPane.style.width = '40%';
+                    rightPane.style.width = '60%';
+                    break;
+                case '70:30':
+                    leftPane.style.width = '70%';
+                    rightPane.style.width = '30%';
+                    break;
+                case '30:70':
+                    leftPane.style.width = '30%';
+                    rightPane.style.width = '70%';
+                    break;
             }
         }
 
+        // Swap Panes
         function swapPanes() {
             const temp = activeWidgets.left;
             activeWidgets.left = activeWidgets.right;
@@ -407,12 +402,14 @@
             renderWidget('right', activeWidgets.right);
         }
 
+        // Change Widget
         function changeWidget(pane, widgetType) {
             activeWidgets[pane] = widgetType;
             localStorage.setItem(`thai_drive_${pane}`, widgetType);
             renderWidget(pane, widgetType);
         }
 
+        // Render Widget Content
         function renderWidget(pane, type) {
             const container = document.getElementById(`content-${pane}`);
             container.innerHTML = '';
@@ -424,7 +421,7 @@
                     break;
                 case 'weather':
                     container.innerHTML = getWeatherHTML();
-                    fetchWeatherData('Bangkok', pane);
+                    fetchWeatherData('Bangkok');
                     break;
                 case 'map':
                     container.innerHTML = getMapHTML();
@@ -438,6 +435,7 @@
             }
         }
 
+        // 1. Vehicle Hub
         function getVehicleHubHTML() {
             return `
                 <div class="h-full flex flex-col justify-between space-y-3">
@@ -451,10 +449,10 @@
                         <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex flex-col items-center justify-center">
                             <span class="text-xs text-slate-400 mb-1" data-i18n="gear">เกียร์ (Gear)</span>
                             <div class="flex space-x-2 my-2">
-                                <span class="gear-btn px-3 py-1 rounded bg-slate-800 text-slate-400 font-bold text-xs" data-gear="P">P</span>
-                                <span class="gear-btn px-3 py-1 rounded bg-slate-800 text-slate-400 font-bold text-xs" data-gear="R">R</span>
-                                <span class="gear-btn px-3 py-1 rounded bg-slate-800 text-slate-400 font-bold text-xs" data-gear="N">N</span>
-                                <span class="gear-btn px-3 py-1 rounded bg-cyan-500 text-slate-950 font-bold text-xs shadow-[0_0_10px_#00f0ff]" data-gear="D">D</span>
+                                <span class="gear-btn px-3 py-1 rounded bg-slate-800 text-slate-400 font-bold text-xs cursor-pointer" data-gear="P">P</span>
+                                <span class="gear-btn px-3 py-1 rounded bg-slate-800 text-slate-400 font-bold text-xs cursor-pointer" data-gear="R">R</span>
+                                <span class="gear-btn px-3 py-1 rounded bg-slate-800 text-slate-400 font-bold text-xs cursor-pointer" data-gear="N">N</span>
+                                <span class="gear-btn px-3 py-1 rounded bg-cyan-500 text-slate-950 font-bold text-xs cursor-pointer shadow-[0_0_10px_#00f0ff]" data-gear="D">D</span>
                             </div>
                             <span class="text-[10px] text-emerald-400 mt-1"><i class="fa-solid fa-bolt"></i> EV Powertrain Active</span>
                         </div>
@@ -511,13 +509,14 @@
             document.querySelectorAll('.gear-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     document.querySelectorAll('.gear-btn').forEach(b => {
-                        b.className = "gear-btn px-3 py-1 rounded bg-slate-800 text-slate-400 font-bold text-xs";
+                        b.className = "gear-btn px-3 py-1 rounded bg-slate-800 text-slate-400 font-bold text-xs cursor-pointer";
                     });
-                    e.target.className = "gear-btn px-3 py-1 rounded bg-cyan-500 text-slate-950 font-bold text-xs shadow-[0_0_10px_#00f0ff]";
+                    e.target.className = "gear-btn px-3 py-1 rounded bg-cyan-500 text-slate-950 font-bold text-xs cursor-pointer shadow-[0_0_10px_#00f0ff]";
                 });
             });
         }
 
+        // 2. Weather Widget
         function getWeatherHTML() {
             return `
                 <div class="h-full flex flex-col space-y-3">
@@ -590,6 +589,7 @@
                 .catch(() => {});
         }
 
+        // 3. Navigation / Map Widget
         function getMapHTML() {
             return `
                 <div class="h-full flex flex-col space-y-2">
@@ -611,7 +611,6 @@
                             <button onclick="filterMap('ปั๊มน้ำมัน')" class="bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full whitespace-nowrap transition">⛽ ปั๊มน้ำมัน</button>
                             <button onclick="filterMap('คาเฟ่')" class="bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full whitespace-nowrap transition">☕ คาเฟ่</button>
                             <button onclick="filterMap('ร้านอาหาร')" class="bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full whitespace-nowrap transition">🍜 ร้านอาหาร</button>
-                            <button onclick="filterMap('โรงพยาบาล')" class="bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full whitespace-nowrap transition">🏥 โรงพยาบาล</button>
                         </div>
                         <button onclick="openExternalGoogleMapNav()" title="Open External Navigation" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full transition flex items-center space-x-1 shrink-0 shadow-[0_0_8px_rgba(0,102,255,0.4)]">
                             <i class="fa-solid fa-diamond-turn-right"></i>
@@ -663,45 +662,52 @@
                         }
                         if(statusText) statusText.innerText = `พิกัดปัจจุบัน: ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
                     },
-                    (error) => {
-                        showMsgModal("GPS Error", "ไม่สามารถดึงตำแหน่งปัจจุบันได้ กรุณาเปิดสิทธิ์ระบุตำแหน่งใน Browser");
+                    () => {
+                        showMsgModal("GPS Error", "ไม่สามารถดึงตำแหน่งปัจจุบันได้");
                         if(statusText) statusText.innerText = "ไม่พบพิกัด GPS";
                     }
                 );
             } else {
-                showMsgModal("Not Supported", "เบราว์เซอร์นี้ไม่รองรับการดึงพิกัด Geolocation");
+                showMsgModal("Not Supported", "เบราว์เซอร์นี้ไม่รองรับ Geolocation");
             }
         }
 
-        function openExternalGoogleMapNav() {
-            const query = document.getElementById('map-search-input').value || "สถานีชาร์จ EV";
-            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, '_blank');
-        }
-
+        // 4. YouTube / Media Player Widget
         function getYouTubeHTML() {
             return `
                 <div class="h-full flex flex-col space-y-2">
+                    <!-- YouTube Search & URL Input Bar -->
                     <div class="flex items-center space-x-2 bg-slate-900/90 border border-slate-800 p-2 rounded-xl shrink-0">
                         <i class="fa-brands fa-youtube text-red-500 text-base ml-1"></i>
-                        <input type="text" id="yt-search-input" placeholder="ค้นหาคลิป / วางลิงก์ YouTube..." onkeypress="if(event.key==='Enter') playCustomYouTube()" class="w-full bg-transparent text-xs text-white focus:outline-none placeholder-slate-500">
-                        <button onclick="playCustomYouTube()" title="Play Video" class="bg-red-600/80 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg transition border border-red-500/30 flex items-center space-x-1 shrink-0 font-medium">
+                        <input type="text" id="yt-search-input" placeholder="พิมพ์ชื่อเพลง / วางลิงก์ YouTube..." onkeypress="if(event.key==='Enter') playCustomYouTube()" class="w-full bg-transparent text-xs text-white focus:outline-none placeholder-slate-500">
+                        <button onclick="playCustomYouTube()" title="Play Video" class="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg transition border border-red-500/30 flex items-center space-x-1 shrink-0 font-medium">
                             <i class="fa-solid fa-play"></i>
                             <span class="hidden sm:inline">เล่น</span>
                         </button>
                     </div>
 
+                    <!-- Quick Playlist & Music Chips -->
                     <div class="flex space-x-1.5 overflow-x-auto pb-1 text-[10px] no-scrollbar shrink-0">
                         <button onclick="loadYouTubeVideo('jfKfPfyJRdk', 'Lofi Hip Hop Radio')" class="bg-slate-900/90 hover:bg-slate-800 text-cyan-300 border border-cyan-500/30 px-2.5 py-1 rounded-full whitespace-nowrap transition">🎧 Lofi Chill</button>
-                        <button onclick="loadYouTubeVideo('wDjeBNv6ip0', 'เพลงไทยฮิต 2026')" class="bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full whitespace-nowrap transition">🎵 เพลงไทยฮิต</button>
                         <button onclick="loadYouTubeVideo('5qap5aO4i9A', 'เพลงฟังในรถ ชิลๆ')" class="bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full whitespace-nowrap transition">🚗 เพลงขับรถ</button>
+                        <button onclick="loadYouTubeVideo('4Tr0wAkyBZs', 'เพลงไทยฮิต 2026')" class="bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full whitespace-nowrap transition">🎵 เพลงไทยฮิต</button>
                         <button onclick="loadYouTubeVideo('10q0K4_t5F0', 'ข่าวสด ThaiPBS')" class="bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full whitespace-nowrap transition">📻 ข่าวสด</button>
                     </div>
 
+                    <!-- YouTube Embed Player Container (Optimized No-Cookie Engine) -->
                     <div class="relative flex-1 bg-black rounded-xl overflow-hidden border border-slate-800 group shadow-lg">
-                        <iframe id="youtube-player-iframe" class="w-full h-full absolute inset-0 border-0" src="https://www.youtube-nocookie.com/embed/jfKfPfyJRdk?autoplay=1&controls=1&rel=0" title="YouTube Player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                        <div class="absolute top-2 left-2 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-md text-[10px] text-cyan-400 border border-cyan-500/30 flex items-center space-x-1.5 pointer-events-none">
-                            <i class="fa-brands fa-youtube text-red-500"></i>
-                            <span id="yt-status-title">Lofi Hip Hop Radio - Beats to Relax</span>
+                        <iframe id="youtube-player-iframe" class="w-full h-full absolute inset-0 border-0" src="https://www.youtube-nocookie.com/embed/jfKfPfyJRdk?autoplay=1&controls=1&rel=0&playsinline=1&enablejsapi=1" title="YouTube Player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                        
+                        <!-- Status Badge Overlay & Direct Open Button -->
+                        <div class="absolute top-2 left-2 right-2 flex justify-between items-center pointer-events-none">
+                            <div class="bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-md text-[10px] text-cyan-400 border border-cyan-500/30 flex items-center space-x-1.5 pointer-events-auto">
+                                <i class="fa-brands fa-youtube text-red-500"></i>
+                                <span id="yt-status-title" class="truncate max-w-[200px]">Lofi Hip Hop Radio</span>
+                            </div>
+                            <button onclick="openExternalYouTube()" title="Open Direct YouTube" class="pointer-events-auto bg-red-600/90 hover:bg-red-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md transition flex items-center space-x-1 border border-red-400 shadow-md">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                <span>เปิดบน YT</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -712,87 +718,89 @@
             if (!urlOrId) return null;
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const match = urlOrId.match(regExp);
-            return (match && match[2].length === 11) ? match[2] : urlOrId;
+            return (match && match[2].length === 11) ? match[2] : (urlOrId.length === 11 ? urlOrId : null);
         }
 
         function playCustomYouTube() {
             const input = document.getElementById('yt-search-input').value.trim();
             if(!input) return;
-            openSafetyModal();
 
             const videoId = extractYouTubeId(input);
-            if(videoId && videoId.length === 11) {
-                loadYouTubeVideo(videoId, `กำลังเล่น: ${videoId}`);
+            if(videoId) {
+                loadYouTubeVideo(videoId, `กำลังเล่นคลิป: ${videoId}`);
             } else {
-                const iframe = document.getElementById('youtube-player-iframe');
+                // Open direct YouTube Search fallback if raw search query string is given
+                window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(input)}`, '_blank');
                 const statusTitle = document.getElementById('yt-status-title');
-                if(iframe) {
-                    iframe.src = `https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(input)}&autoplay=1`;
-                }
-                if(statusTitle) {
-                    statusTitle.innerText = `ค้นหา: ${input}`;
-                }
+                if(statusTitle) statusTitle.innerText = `ค้นหา: ${input}`;
             }
         }
 
         function loadYouTubeVideo(videoId, title) {
-            openSafetyModal();
             const iframe = document.getElementById('youtube-player-iframe');
             const statusTitle = document.getElementById('yt-status-title');
             if(iframe) {
-                iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&controls=1&rel=0`;
+                iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&controls=1&rel=0&playsinline=1&enablejsapi=1`;
             }
             if(statusTitle) {
                 statusTitle.innerText = title;
             }
         }
 
+        function openExternalYouTube() {
+            const input = document.getElementById('yt-search-input')?.value.trim();
+            const videoId = extractYouTubeId(input);
+            if (videoId) {
+                window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
+            } else if (input) {
+                window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(input)}`, '_blank');
+            } else {
+                window.open(`https://www.youtube.com`, '_blank');
+            }
+        }
+
+        // 5. Thai IPTV Widget
         function getIPTVHTML() {
             return `
                 <div class="h-full flex flex-col space-y-3">
-                    <div class="grid grid-cols-2 gap-2 shrink-0">
-                        <button onclick="switchIPTVChannel('ThaiPBS Live', 'https://www.youtube-nocookie.com/embed/10q0K4_t5F0?autoplay=1')" class="bg-slate-900/80 hover:bg-slate-800 border border-slate-800 p-2.5 rounded-xl flex items-center space-x-3 text-left transition group">
-                            <div class="w-8 h-8 rounded bg-red-500/20 text-red-400 flex items-center justify-center font-bold text-xs">TPBS</div>
-                            <div>
-                                <div class="text-xs font-bold text-white group-hover:text-cyan-400">ThaiPBS TV</div>
-                                <div class="text-[10px] text-slate-400">Live HD Channel</div>
+                    <div class="bg-slate-900/60 border border-slate-800 p-2.5 rounded-xl flex items-center justify-between">
+                        <span class="text-xs text-slate-300 font-semibold"><i class="fa-solid fa-tv text-cyan-400 mr-1.5"></i> ทีวีดิจิทัลไทย</span>
+                        <span class="text-[10px] text-emerald-400 font-mono"><i class="fa-solid fa-signal"></i> Live HD</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 flex-1">
+                        <button onclick="playIPTVChannel('ThaiPBS')" class="bg-slate-900/80 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500/50 p-3 rounded-xl flex flex-col items-center justify-center space-y-2 transition group">
+                            <div class="w-10 h-10 rounded-full bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-400 text-lg group-hover:scale-110 transition">
+                                <i class="fa-solid fa-play"></i>
                             </div>
+                            <span class="text-xs font-bold text-white">Thai PBS</span>
+                            <span class="text-[9px] text-slate-400">ช่องหมายเลข 3</span>
                         </button>
-                        <button onclick="switchIPTVChannel('Thairath Live', 'https://www.youtube-nocookie.com/embed/g3E-o_wHk_M?autoplay=1')" class="bg-slate-900/80 hover:bg-slate-800 border border-slate-800 p-2.5 rounded-xl flex items-center space-x-3 text-left transition group">
-                            <div class="w-8 h-8 rounded bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xs">TR32</div>
-                            <div>
-                                <div class="text-xs font-bold text-white group-hover:text-cyan-400">Thairath TV</div>
-                                <div class="text-[10px] text-slate-400">News & Variety</div>
+                        <button onclick="playIPTVChannel('Thairath')" class="bg-slate-900/80 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500/50 p-3 rounded-xl flex flex-col items-center justify-center space-y-2 transition group">
+                            <div class="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-lg group-hover:scale-110 transition">
+                                <i class="fa-solid fa-play"></i>
                             </div>
+                            <span class="text-xs font-bold text-white">ไทยรัฐทีวี</span>
+                            <span class="text-[9px] text-slate-400">ช่องหมายเลข 32</span>
                         </button>
                     </div>
-                    <div class="relative flex-1 bg-black rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center">
-                        <iframe id="iptv-frame" class="w-full h-full absolute inset-0 border-0" src="https://www.youtube-nocookie.com/embed/10q0K4_t5F0?autoplay=1&controls=1" title="IPTV Stream" allowfullscreen></iframe>
-                        <div class="absolute top-2 left-2 bg-black/60 backdrop-blur px-2.5 py-1 rounded-md text-[10px] text-emerald-400 border border-emerald-500/30 flex items-center space-x-1.5">
-                            <i class="fa-solid fa-tower-broadcast animate-pulse"></i>
-                            <span id="iptv-status-name">ThaiPBS Live HD</span>
-                        </div>
+
+                    <div class="bg-slate-900/40 border border-slate-800 p-3 rounded-xl text-center">
+                        <p class="text-[10px] text-slate-400">กดเลือกช่องทีวีเพื่อเปิดรับชมถ่ายทอดสดบนหน้าจอ</p>
                     </div>
                 </div>
             `;
         }
 
-        function switchIPTVChannel(name, url) {
-            openSafetyModal();
-            const frame = document.getElementById('iptv-frame');
-            const statusName = document.getElementById('iptv-status-name');
-            if(frame) frame.src = url;
-            if(statusName) statusName.innerText = name;
+        function playIPTVChannel(channel) {
+            if(channel === 'ThaiPBS') {
+                window.open('https://www.thaipbs.or.th/live', '_blank');
+            } else if(channel === 'Thairath') {
+                window.open('https://www.thairath.co.th/tv/live', '_blank');
+            }
         }
 
-        function openSafetyModal() {
-            document.getElementById('safety-modal').classList.remove('hidden');
-        }
-
-        function closeSafetyModal() {
-            document.getElementById('safety-modal').classList.add('hidden');
-        }
-
+        // Custom Message Modal Control
         function showMsgModal(title, text) {
             document.getElementById('msg-title').innerText = title;
             document.getElementById('msg-text').innerText = text;
